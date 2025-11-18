@@ -74,7 +74,7 @@ func (hub *Hub) broadcast(channelID string, response *WSMessageResponse) {
 				return
 			}
 		} else {
-			fmt.Println("marshal error:", err)
+			fmt.Println("marshal errorrrrrrrrrrr:", err)
 		}
 	}
 }
