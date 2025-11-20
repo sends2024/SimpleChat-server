@@ -12,9 +12,9 @@ import (
 // Client 单个客户端
 type Client struct {
 	conn      *websocket.Conn
-	channelId string
+	ChannelID string
 
-	username string
+	UserID string
 }
 
 // Hub 管理中枢
@@ -23,16 +23,16 @@ type Hub struct {
 	mu       sync.Mutex
 }
 
-type WSMessage struct {
-	ChannelId string    `json:"channelId"`
-	Username  string    `json:"sender"`
+type MessagePayload struct {
+	ChannelID string    `json:"channel_id"`
+	UserID    string    `json:"user_id"`
 	Message   string    `json:"message"`
-	SendTime  time.Time `json:"createAt"`
+	SendTime  time.Time `json:"create_at"`
 }
 
-type WSMessageResponse struct {
-	Type string    `json:"type"`
-	Data WSMessage `json:"data"`
+type WSResponse struct {
+	Type    string      `json:"type"`
+	Payload interface{} `json:"payload"`
 }
 
 func NewHub() *Hub {
@@ -44,7 +44,7 @@ func (hub *Hub) addClient(client *Client) {
 	defer hub.mu.Unlock()
 	// 加个锁 防止冲突
 
-	route := client.channelId
+	route := client.ChannelID
 	if hub.channels[route] == nil {
 		hub.channels[route] = make(map[*Client]bool)
 	}
@@ -55,7 +55,7 @@ func (hub *Hub) removeClient(client *Client) {
 	hub.mu.Lock()
 	defer hub.mu.Unlock()
 
-	route := client.channelId
+	route := client.ChannelID
 	delete(hub.channels[route], client)
 
 	if len(hub.channels[route]) == 0 {
@@ -63,7 +63,7 @@ func (hub *Hub) removeClient(client *Client) {
 	} // 频道没人了就删整个频道
 }
 
-func (hub *Hub) broadcast(channelID string, response *WSMessageResponse) {
+func (hub *Hub) Broadcast(channelID string, response *WSResponse) {
 	hub.mu.Lock()
 	defer hub.mu.Unlock()
 

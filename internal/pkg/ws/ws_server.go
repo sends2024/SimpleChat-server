@@ -1,20 +1,37 @@
 package ws
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/redis/go-redis/v9"
 
 	"ws_server/internal/config"
+	rediscli "ws_server/internal/pkg/redis"
 )
+
+const StreamName = "async_tasks"
+
+type Envelope struct {
+	TaskType string          `json:"task_type"`
+	Payload  json.RawMessage `json:"payload"`
+}
+
+type Message struct {
+	SenderID string    `json:"sender_id"`
+	Content  string    `json:"content"`
+	SentAt   time.Time `json:"sent_at"`
+}
 
 func HandlerWebSocket(hub *Hub, w http.ResponseWriter, r *http.Request) {
 
-	channelId := r.URL.Query().Get("channelID") // 获取此客户端的所在频道, 用于发送信息
-	username := r.URL.Query().Get("username")   // 获取用户名当sender
+	ChannelID := r.URL.Query().Get("channel_id") // 获取此客户端的所在频道, 用于发送信息
+	UserID := r.URL.Query().Get("user_id")       // 获取用户名当sender
 	//token := r.URL.Query().Get("token")         // 获取用户名当sender
 
 	//// token 校验
@@ -41,18 +58,18 @@ func HandlerWebSocket(hub *Hub, w http.ResponseWriter, r *http.Request) {
 
 	client := &Client{
 		conn:      conn,
-		channelId: channelId,
-		username:  username,
+		ChannelID: ChannelID,
+		UserID:    UserID,
 	}
 
 	hub.addClient(client) // 加入客户端到 hub
 	defer func() {
 		hub.removeClient(client)
 		conn.Close()
-		fmt.Println("Client disconnected:", client.username)
+		fmt.Println("Client disconnected:", client.UserID)
 	}()
 
-	fmt.Println(client.username, "channel:", client.channelId, "-----------connected")
+	fmt.Println(client.UserID, "channel:", client.ChannelID, "-----------connected")
 
 	for {
 		msgType, message, err := conn.ReadMessage()
@@ -64,18 +81,19 @@ func HandlerWebSocket(hub *Hub, w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		ResponseMessage := &WSMessageResponse{
+		ResponseMessage := &WSResponse{
 			Type: "SYSTEM",
-			Data: WSMessage{
-				ChannelId: client.channelId,
-				Username:  client.username,
-				Message:   "server received: " + string(message),
+			Payload: MessagePayload{
+				ChannelID: client.ChannelID,
+				UserID:    client.UserID,
+				Message:   string(message),
 				SendTime:  time.Now().UTC(),
 			},
 		}
 
 		// 服务器回复请求成功
-		if jsonBytes, err := json.Marshal(ResponseMessage); err == nil {
+		jsonBytes, err := json.Marshal(ResponseMessage)
+		if err == nil {
 			err := conn.WriteMessage(websocket.TextMessage, jsonBytes)
 			if err != nil {
 				return
@@ -84,8 +102,44 @@ func HandlerWebSocket(hub *Hub, w http.ResponseWriter, r *http.Request) {
 			fmt.Println("marshal error:", err)
 		}
 
+		mp, _ := ResponseMessage.Payload.(MessagePayload)
+		msg := &Message{
+			SenderID: client.UserID,
+			Content:  string(message),
+			SentAt:   mp.SendTime,
+		}
+
+		msgJSON, _ := json.Marshal(msg)
+		rediscli.Rds.LPush(context.Background(), fmt.Sprintf("chat:history:%s", client.ChannelID), msgJSON)
+		rediscli.Rds.LTrim(context.Background(), fmt.Sprintf("chat:history:%s", client.ChannelID), 0, 99)
+
 		ResponseMessage.Type = "CHAT"
-		ResponseMessage.Data.Message = string(message)
-		hub.broadcast(client.channelId, ResponseMessage) // 广播消息
+		payloadBytes, err := json.Marshal(ResponseMessage.Payload)
+		if err != nil {
+			return
+		}
+
+		envelope := Envelope{
+			TaskType: "chat_message",
+			Payload:  payloadBytes,
+		}
+		envelopeBytes, err := json.Marshal(envelope)
+		if err != nil {
+			return
+		}
+
+		_, err = rediscli.Rds.XAdd(context.Background(), &redis.XAddArgs{
+			Stream: StreamName,
+			Values: map[string]interface{}{
+				"data": string(envelopeBytes),
+			},
+		}).Result()
+
+		if err != nil {
+			log.Printf("Failed to enqueue task")
+			return
+		}
+
+		hub.Broadcast(client.ChannelID, ResponseMessage) // 广播消息
 	}
 }

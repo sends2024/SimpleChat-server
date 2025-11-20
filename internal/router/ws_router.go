@@ -14,11 +14,7 @@ func SetupWSRouter(hub *ws.Hub) *mux.Router {
 
 	router.HandleFunc("/ws/chat", func(w http.ResponseWriter, r *http.Request) {
 		ws.HandlerWebSocket(hub, w, r)
-	}).Methods("GET") // ws chat 路由, 参数 channelID, username, token
-
-	router.HandleFunc("/ws/aibot", func(w http.ResponseWriter, r *http.Request) {
-		ws.HandlerWebSocket(hub, w, r)
-	}).Methods("GET") // 看看吧 用ai拓展那边使用?
+	}).Methods("GET") // ws chat 路由, 参数 channel_id, user_id
 
 	return router
 }
