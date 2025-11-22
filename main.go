@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	rediscli "ws_server/internal/pkg/redis"
 	"ws_server/internal/pkg/ws"
 	"ws_server/internal/pkg/ws/events"
 	"ws_server/internal/router"
@@ -12,6 +13,7 @@ import (
 func main() {
 	hub := ws.NewHub()
 
+	rediscli.Init()
 	go events.ListenChannelEvents(hub)
 
 	r := router.SetupWSRouter(hub)
