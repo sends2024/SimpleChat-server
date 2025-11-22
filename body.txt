@@ -1,0 +1,76 @@
+// JOIN
+
+{
+    "type": "JOIN",
+    "payload": {
+        "username": "alice",
+        "avatar_url": "http://localhost:8080/uploads/01KAMQFKX9VEDPRWKR0KFY9J7G_1763781046_WIN_20251009_00_07_36_Pro.jpg",
+        "channel_id": "01KAMT1JM3KHCZAN2JYAS74GET",
+        "channel_name": "疯狂动物园",
+        "is_owner": false,
+        "user_id": "01KAMQFKX9VEDPRWKR0KFY9J7G"
+    }
+}
+
+// LEAVE
+
+{
+    "type": "LEAVE",
+    "payload": {
+        "channel_id": "01KAMT1JM3KHCZAN2JYAS74GET",
+        "user_id": "01KAMQFKX9VEDPRWKR0KFY9J7G"
+    }
+}
+
+// KICK
+
+{
+    "type": "KICK",
+    "payload": {
+        "channel_id": "01KAMT1JM3KHCZAN2JYAS74GET",
+        "user_id": "01KAMQFKX9VEDPRWKR0KFY9J7G"
+    }
+}
+
+// CHANGE
+
+{
+    "type": "CHANGE",
+    "payload": {
+        "channel_id": "01KAMT1JM3KHCZAN2JYAS74GET",
+        "channel_name": "自溜之地"
+    }
+}
+
+// DELETE
+
+{
+    "type": "DELETE",
+    "payload": {
+        "channel_id": "01KAMT1JM3KHCZAN2JYAS74GET"
+    }
+}
+
+// SYSTEM
+
+{
+    "type": "SYSTEM",
+    "payload": {
+        "channel_id": "01KAMT1JM3KHCZAN2JYAS74GET",
+        "user_id": "01KAMQFKX9VEDPRWKR0KFY9J7G",
+        "message": "21313123123",
+        "create_at": "2025-11-22T06:44:21.8686782Z"
+    }
+}
+
+// CHAT
+
+{
+    "type": "CHAT",
+    "payload": {
+        "channel_id": "01KAMT1JM3KHCZAN2JYAS74GET",
+        "user_id": "01KAMQFKX9VEDPRWKR0KFY9J7G",
+        "message": "21313123123",
+        "create_at": "2025-11-22T06:44:21.8686782Z"
+    }
+}
