@@ -6,12 +6,14 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/redis/go-redis/v9"
 
+	"simplechat/server/common/pkg/jwt"
 	rediscli "simplechat/server/common/pkg/redis"
 	"simplechat/ws-server/config"
 )
@@ -42,21 +44,21 @@ func HandlerWebSocket(hub *Hub, w http.ResponseWriter, r *http.Request) {
 
 	ChannelID := r.URL.Query().Get("channel_id") // 获取此客户端的所在频道, 用于发送信息
 	UserID := r.URL.Query().Get("user_id")       // 获取用户名当sender
-	//token := r.URL.Query().Get("token")         // 获取用户名当sender
+	Username := r.URL.Query().Get("username")    // 获取用户名当sender
+	token := r.URL.Query().Get("token")          // 获取用户名当sender
 
-	//// token 校验
-	//if !jwt.exists(token) {
-	//	fmt.Println("token not exists")
-	//	http.Error(w, "access token does not exist", http.StatusUnauthorized)
-	//	return
-	//}
-	//
-	//// 数据库校验
-	//if !db.ChannelExists(channelId) { // 数据库找channel ID, 没找到不能进行 ws 连接
-	//	fmt.Println("db cannot serch this channel ID:", err)
-	//	http.Error(w, "channel not found", http.StatusForbidden)
-	//	return
-	//}
+	// token 校验
+	parts := strings.SplitN(token, " ", 2)
+	if len(parts) != 2 || parts[0] != "Bearer" {
+		log.Printf("Invalid Authorization format")
+		return
+	}
+
+	_, err := jwt.ParseToken(parts[1])
+	if err != nil {
+		log.Printf("Invalid or expired token")
+		return
+	}
 
 	// 升级协议, 并支持跨域
 	conn, err := config.Upgrader.Upgrade(w, r, nil)
@@ -95,7 +97,7 @@ func HandlerWebSocket(hub *Hub, w http.ResponseWriter, r *http.Request) {
 			Type: "SYSTEM",
 			Payload: MessagePayload{
 				ChannelID: client.ChannelID,
-				UserID:    client.UserID,
+				UserName:  Username,
 				Message:   string(message),
 				SendTime:  time.Now().UTC(),
 			},

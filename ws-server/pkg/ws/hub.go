@@ -25,7 +25,7 @@ type Hub struct {
 
 type MessagePayload struct {
 	ChannelID string    `json:"channel_id"`
-	UserID    string    `json:"user_id"`
+	UserName  string    `json:"username"`
 	Message   string    `json:"message"`
 	SendTime  time.Time `json:"create_at"`
 }
