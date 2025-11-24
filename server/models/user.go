@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type User struct {
 	ID        string `gorm:"type:char(26);primaryKey" json:"user_id"`
 	Username  string `gorm:"uniqueIndex;size:64;not null" json:"username"`
@@ -9,8 +11,9 @@ type User struct {
 }
 
 type AIMessage struct {
-	ID         string `gorm:"type:char(26);primaryKey" json:"id"`
-	UserID     string `gorm:"type:char(26);index;not null" json:"user_id"`
-	SenderRole string `gorm:"type:varchar(16);not null" json:"sender_role"`
-	Content    string `gorm:"type:text;not null" json:"content"`
+	ID         string    `gorm:"type:char(26);primaryKey" json:"id"`
+	UserID     string    `gorm:"type:char(26);index;not null" json:"user_id"`
+	SenderRole string    `gorm:"type:varchar(16);not null" json:"sender_role"`
+	Content    string    `gorm:"type:text;not null" json:"content"`
+	CreatedAt  time.Time `gorm:"autoCreateTime" json:"created_at"`
 }
