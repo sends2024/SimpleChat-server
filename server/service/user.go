@@ -76,3 +76,33 @@ func ChangeAvatar(userID, newURL string) error {
 
 	return nil
 }
+
+func DeleteHistory(userID string) *response.AppError {
+	if err := dao.DeleteAIHistory(userID); err != nil {
+		return response.NewAppError(http.StatusInternalServerError, "Failed to delete history")
+	}
+	return nil
+}
+
+func NewMessage(role, content, userID string) *response.AppError {
+	msg := models.AIMessage{
+		ID:         utils.NewULID(),
+		UserID:     userID,
+		SenderRole: role,
+		Content:    content,
+	}
+
+	if err := dao.CreateAIMessage(&msg); err != nil {
+		return response.NewAppError(http.StatusInternalServerError, "Failed to save message")
+	}
+
+	return nil
+}
+
+func GetAIHistory(userID string) ([]models.AIMessage, *response.AppError) {
+	list, err := dao.GetAIHistoryList(userID)
+	if err != nil {
+		return nil, response.NewAppError(http.StatusInternalServerError, "Failed to get history")
+	}
+	return list, nil
+}

@@ -33,3 +33,22 @@ func UpdatePassword(userID, newHashedPassword string) {
 func UpdateAvatar(url, userID string) {
 	db.DB.Model(&models.User{}).Where("id = ?", userID).Update("avatar_url", url)
 }
+
+func DeleteAIHistory(userID string) error {
+	return db.DB.Where("user_id = ?", userID).Delete(&models.AIMessage{}).Error
+}
+
+func CreateAIMessage(msg *models.AIMessage) error {
+	return db.DB.Create(msg).Error
+}
+
+func GetAIHistoryList(userID string) ([]models.AIMessage, error) {
+	var list []models.AIMessage
+
+	err := db.DB.
+		Where("user_id = ?", userID).
+		Order("created_at ASC").
+		Find(&list).Error
+
+	return list, err
+}

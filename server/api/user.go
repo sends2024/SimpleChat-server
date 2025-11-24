@@ -38,6 +38,11 @@ type ChangeAvatarPayload struct {
 	Token  string `json:"token"`
 }
 
+type NewMessageRequest struct {
+	SenderRole string `json:"sender_role" binding:"required"`
+	Content    string `json:"content" binding:"required"`
+}
+
 func Register(c *gin.Context) {
 	var req RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -133,4 +138,43 @@ func ChangeAvatar(c *gin.Context) {
 
 	response.Success(c, gin.H{"avatar_url": url})
 
+}
+
+func DeleteHistory(c *gin.Context) {
+	userID := c.GetString("user_id")
+
+	if err := service.DeleteHistory(userID); err != nil {
+		response.HandleServiceError(c, err)
+		return
+	}
+
+	response.Success(c, nil)
+}
+
+func NewMessage(c *gin.Context) {
+	var req NewMessageRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, http.StatusBadRequest, "Invalid request parameters")
+		return
+	}
+	userID := c.GetString("user_id")
+
+	if err := service.NewMessage(req.SenderRole, req.Content, userID); err != nil {
+		response.HandleServiceError(c, err)
+		return
+	}
+
+	response.Success(c, nil)
+}
+
+func GetAIHistory(c *gin.Context) {
+	userID := c.GetString("user_id")
+
+	data, err := service.GetAIHistory(userID)
+	if err != nil {
+		response.HandleServiceError(c, err)
+		return
+	}
+
+	response.Success(c, data)
 }
