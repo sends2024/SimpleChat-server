@@ -22,6 +22,9 @@ func SetupRouter(r *gin.Engine) {
 	{
 		user.PATCH("/password", api.ChangePassword)
 		user.PUT("/avatar", api.ChangeAvatar)
+		user.POST("/ai/delete", api.DeleteHistory)
+		user.POST("/ai/new", api.NewMessage)
+		user.GET("/ai/history", api.GetAIHistory)
 	}
 
 	channels := origen.Group("/channels")
