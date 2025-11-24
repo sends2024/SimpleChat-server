@@ -33,5 +33,5 @@ func Init() {
 	sqlDB.SetConnMaxLifetime(time.Hour)
 
 	DB = db
-	DB.AutoMigrate(&models.User{}, &models.Channel{}, &models.ChannelMember{}, &models.Message{})
+	DB.AutoMigrate(&models.User{}, &models.Channel{}, &models.ChannelMember{}, &models.Message{}, &models.AIMessage{})
 }
