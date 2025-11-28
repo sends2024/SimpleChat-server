@@ -6,16 +6,16 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"simplechat/server/common/pkg/jwt"
+	rediscli "simplechat/server/common/pkg/redis"
 	"strings"
 	"time"
+
+	"simplechat/ws-server/config"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/redis/go-redis/v9"
-
-	"simplechat/server/common/pkg/jwt"
-	rediscli "simplechat/server/common/pkg/redis"
-	"simplechat/ws-server/config"
 )
 
 const StreamName = "async_tasks"
@@ -27,6 +27,7 @@ type Envelope struct {
 
 type Message struct {
 	SenderID string    `json:"sender_id"`
+	Sender   string    `json:"sender"`
 	Content  string    `json:"content"`
 	SentAt   time.Time `json:"sent_at"`
 }
@@ -72,6 +73,7 @@ func HandlerWebSocket(hub *Hub, w http.ResponseWriter, r *http.Request) {
 		conn:      conn,
 		ChannelID: ChannelID,
 		UserID:    UserID,
+		Username:  Username,
 	}
 
 	hub.addClient(client) // 加入客户端到 hub
@@ -97,6 +99,7 @@ func HandlerWebSocket(hub *Hub, w http.ResponseWriter, r *http.Request) {
 			Type: "SYSTEM",
 			Payload: MessagePayload{
 				ChannelID: client.ChannelID,
+				SenderID:  client.UserID,
 				UserName:  Username,
 				Message:   string(message),
 				SendTime:  time.Now().UTC(),
@@ -148,7 +151,7 @@ func HandlerWebSocket(hub *Hub, w http.ResponseWriter, r *http.Request) {
 		}).Result()
 
 		if err != nil {
-			log.Printf("Failed to enqueue task")
+			log.Printf("Failed to enqueue task", err)
 			return
 		}
 

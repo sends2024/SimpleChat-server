@@ -14,7 +14,8 @@ type Client struct {
 	conn      *websocket.Conn
 	ChannelID string
 
-	UserID string
+	UserID   string
+	Username string
 }
 
 // Hub 管理中枢
@@ -25,6 +26,7 @@ type Hub struct {
 
 type MessagePayload struct {
 	ChannelID string    `json:"channel_id"`
+	SenderID  string    `json:"sender_id"`
 	UserName  string    `json:"username"`
 	Message   string    `json:"message"`
 	SendTime  time.Time `json:"create_at"`
